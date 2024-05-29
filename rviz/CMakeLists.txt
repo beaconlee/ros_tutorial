@@ -12,8 +12,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
-add_executable(rviz_tutorial src/rviz_tutorial.cpp)
+add_executable(rviz_tutorial src/rviz_tutorial.cpp  src/quintic_polynomial.cc)
+
+
 target_include_directories(rviz_tutorial PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
@@ -23,6 +26,7 @@ ament_target_dependencies(
   "rclcpp"
   "std_msgs"
   "nav_msgs"
+  "visualization_msgs"
 )
 
 install(TARGETS rviz_tutorial
