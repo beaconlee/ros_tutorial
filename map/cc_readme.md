@@ -233,3 +233,206 @@ rviz2
 - `draw_road` 函数用于在地图上绘制一条道路。你可以指定道路的左上角和右下角的坐标，以及道路的值（这里设置为0表示空闲）。
 
 通过这种方式，你可以生成一个更具体和清晰的栅格地图，在RViz中显示矩形建筑和道路。你可以根据需要调整矩形和道路的坐标，以生成你需要的地图布局。
+
+
+# ERROR
+uan@beacon:~/workspace/ros_tutorial$ rviz2
+qt.qpa.plugin: Could not find the Qt platform plugin "wayland" in ""
+[INFO] [1716955018.239446947] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1716955018.239539252] [rviz2]: OpenGl version: 4.6 (GLSL 4.6)
+[INFO] [1716955018.250581203] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1716955026.853962874] [rviz2]: Trying to create a map of size 100 x 100 using 1 swatches
+[ERROR] [1716955026.885782940] [rviz2]: Vertex Program:rviz/glsl120/indexed_8bit_image.vert Fragment Program:rviz/glsl120/indexed_8bit_image.frag GLSL link result : 
+active samplers with a different type refer to the same texture image unit
+
+
+
+这个错误通常是由于在RViz中加载的着色器程序不兼容或存在冲突。我们可以尝试通过以下方法来解决这个问题：
+
+### 1. 更新系统和软件包
+首先，确保系统和所有相关软件包是最新的：
+
+```bash
+sudo apt update
+sudo apt upgrade
+```
+
+### 2. 检查图形驱动程序
+确保你使用的是最新的图形驱动程序。如果你使用的是NVIDIA显卡，可以使用以下命令更新驱动：
+
+```bash
+sudo ubuntu-drivers autoinstall
+```
+
+### 3. 使用X11而非Wayland
+错误信息中提到了`Qt platform plugin "wayland"`，你可以尝试使用X11而不是Wayland来启动RViz。你可以在登录界面选择`Ubuntu on Xorg`，然后重新启动RViz。
+
+### 4. 修改RViz配置文件
+你可以尝试通过修改RViz配置文件来避免着色器冲突。找到RViz配置文件（通常位于`~/.rviz2/default.rviz`），并尝试重置或修改其中的设置。
+
+### 5. 手动指定Qt平台
+尝试手动指定使用X11而不是Wayland：
+
+```bash
+export QT_QPA_PLATFORM=xcb
+rviz2
+```
+
+### 6. 确保正确的OpenGL版本
+确保系统支持并正确配置了OpenGL。你可以使用以下命令查看OpenGL版本：
+
+```bash
+glxinfo | grep "OpenGL version"
+```
+
+### 7. 安装mesa-utils（如适用）
+如果未安装mesa-utils，可以通过以下命令安装：
+
+```bash
+sudo apt install mesa-utils
+```
+
+### 8. 检查RViz日志
+查看RViz的详细日志，以获取更多信息。日志文件通常位于`~/.ros/log`目录下。
+
+### 9. 调整栅格地图生成代码
+虽然这不太可能是引起GLSL错误的原因，但为了确保发布的栅格地图数据没有问题，可以再检查一下代码是否有误。
+
+### 示例：`grid_map_publisher.cpp`
+
+确保生成的地图数据是正确的。例如：
+
+```cpp
+void draw_rectangle(std::vector<int8_t>& data, int width, int x0, int y0, int x1, int y1, int value)
+{
+    for (int y = y0; y <= y1; ++y)
+    {
+        for (int x = x0; x <= x1; ++x)
+        {
+            if (x >= 0 && x < width && y >= 0 && y < width) // Check bounds
+            {
+                data[y * width + x] = value;
+            }
+        }
+    }
+}
+
+void draw_road(std::vector<int8_t>& data, int width, int x0, int x1, int y0, int y1, int value)
+{
+    for (int y = y0; y <= y1; ++y)
+    {
+        for (int x = x0; x <= x1; ++x)
+        {
+            if (x >= 0 && x < width && y >= 0 && y < width) // Check bounds
+            {
+                data[y * width + x] = value;
+            }
+        }
+    }
+}
+```
+
+### 总结
+以上方法应该能够帮助解决RViz2启动时的着色器错误问题。如果问题仍然存在，请提供更多详细信息，例如系统版本、ROS2发行版版本等，以便进一步排查。
+
+
+
+
+
+# 发布事件触发 node
+
+在 ROS 2 中使用 C++ 创建一个节点，该节点只有在特定事件触发时才发布消息，而不是定时发布消息，可以通过订阅和发布的机制来实现。下面是一个详细的示例代码：
+
+首先，确保你已经安装了 ROS 2，并创建了一个工作空间。然后，在工作空间中创建一个新的包：
+
+```sh
+ros2 pkg create --build-type ament_cmake event_trigger_node
+```
+
+在 `src` 目录下创建一个新的 C++ 文件，例如 `event_trigger_node.cpp`：
+
+```cpp
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
+
+class EventTriggerNode : public rclcpp::Node
+{
+public:
+    EventTriggerNode() : Node("event_trigger_node")
+    {
+        // 创建订阅者，监听 /trigger_event 主题
+        subscription_ = this->create_subscription<std_msgs::msg::String>(
+            "/trigger_event", 10,
+            std::bind(&EventTriggerNode::trigger_callback, this, std::placeholders::_1));
+
+        // 创建发布者，用于发布消息到 /output 主题
+        publisher_ = this->create_publisher<std_msgs::msg::String>("/output", 10);
+    }
+
+private:
+    void trigger_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received trigger event: '%s'", msg->data.c_str());
+
+        // 创建要发布的消息
+        auto output_msg = std::make_shared<std_msgs::msg::String>();
+        output_msg->data = "Triggered message!";
+
+        // 发布消息
+        publisher_->publish(*output_msg);
+        RCLCPP_INFO(this->get_logger(), "Published: '%s'", output_msg->data.c_str());
+    }
+
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+};
+
+int main(int argc, char *argv[])
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<EventTriggerNode>());
+    rclcpp::shutdown();
+    return 0;
+}
+```
+
+接下来，修改 `CMakeLists.txt` 文件以确保脚本可以正确编译和运行：
+
+```cmake
+cmake_minimum_required(VERSION 3.5)
+project(event_trigger_node)
+
+# 找到依赖包
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+# 添加可执行文件
+add_executable(event_trigger_node src/event_trigger_node.cpp)
+
+# 链接依赖库
+ament_target_dependencies(event_trigger_node rclcpp std_msgs)
+
+# 安装可执行文件
+install(TARGETS
+  event_trigger_node
+  DESTINATION lib/${PROJECT_NAME})
+
+ament_package()
+```
+
+现在你可以构建并运行这个节点：
+
+```sh
+colcon build
+source install/setup.bash
+ros2 run event_trigger_node event_trigger_node
+```
+
+此时，你可以通过发布消息到 `/trigger_event` 主题来触发该节点发布消息。例如，可以使用 `ros2 topic pub` 命令来测试：
+
+```sh
+ros2 topic pub /trigger_event std_msgs/msg/String "data: 'Hello'"
+```
+
+这个示例展示了如何在事件触发时发布消息，而不是定时发布。你可以根据实际应用的需求调整订阅和发布的逻辑。
