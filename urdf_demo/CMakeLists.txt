@@ -25,8 +25,11 @@ ament_target_dependencies(
   "visualization_msgs"
 )
 
-install(TARGETS urdf_demo
-  DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS urdf_demo
+#   DESTINATION lib/${PROJECT_NAME})
+# 设置安装目录
+install(DIRECTORY launch rviz urdf meshes
+        DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
