@@ -42,6 +42,63 @@
 //   return 0;
 // }
 
+// #include "rclcpp/rclcpp.hpp"
+// #include "nav_msgs/msg/path.hpp"
+// #include "geometry_msgs/msg/pose_stamped.hpp"
+
+// class PathPublisher : public rclcpp::Node
+// {
+// public:
+//   PathPublisher()
+//     : Node("path_publisher")
+//   {
+//     publisher_ = this->create_publisher<nav_msgs::msg::Path>("path", 10);
+//     timer_ =
+//         this->create_wall_timer(std::chrono::milliseconds(500),
+//                                 std::bind(&PathPublisher::publish_path, this));
+//   }
+
+// private:
+//   void publish_path()
+//   {
+//     auto path = nav_msgs::msg::Path();
+//     path.header.stamp = this->now();
+//     path.header.frame_id = "odom";
+
+//     // 生成一些假设的路径点
+//     for(int i = 0; i < 10; ++i)
+//     {
+//       geometry_msgs::msg::PoseStamped pose;
+//       pose.header.stamp = this->now();
+//       pose.header.frame_id = "odom";
+//       pose.pose.position.x = i * 0.5;
+//       pose.pose.position.y = i * 0.5;
+//       pose.pose.position.z = 0.0;
+//       pose.pose.orientation.w = 1.0;
+
+//       path.poses.push_back(pose);
+//     }
+
+//     std::cout << "fabushuju" << std::endl;
+
+
+//     publisher_->publish(path);
+//   }
+
+//   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr publisher_;
+//   rclcpp::TimerBase::SharedPtr timer_;
+// };
+
+// int main(int argc, char* argv[])
+// {
+//   rclcpp::init(argc, argv);
+//   auto node = std::make_shared<PathPublisher>();
+//   rclcpp::spin(node);
+//   rclcpp::shutdown();
+//   return 0;
+// }
+
+
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -63,24 +120,26 @@ private:
   {
     auto path = nav_msgs::msg::Path();
     path.header.stamp = this->now();
-    path.header.frame_id = "odom";
+    path.header.frame_id = "map";
 
-    // 生成一些假设的路径点
+    static int j = 1;
+    ++j;
+    if(j > 4)
+    {
+      j = 1;
+    }
     for(int i = 0; i < 10; ++i)
     {
       geometry_msgs::msg::PoseStamped pose;
       pose.header.stamp = this->now();
-      pose.header.frame_id = "odom";
-      pose.pose.position.x = i * 0.5;
-      pose.pose.position.y = i * 0.5;
+      pose.header.frame_id = "map";
+      pose.pose.position.x = i * 0.5 * j;
+      pose.pose.position.y = i * 0.5 * j;
       pose.pose.position.z = 0.0;
       pose.pose.orientation.w = 1.0;
 
       path.poses.push_back(pose);
     }
-
-    std::cout << "fabushuju" << std::endl;
-
 
     publisher_->publish(path);
   }
@@ -93,6 +152,9 @@ int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<PathPublisher>();
+  RCLCPP_INFO(node->get_logger(), "wudi");
+
+
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
