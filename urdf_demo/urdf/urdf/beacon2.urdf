@@ -1,0 +1,25 @@
+<!-- 是一个标准的 xml 文件 -->
+<!-- 
+  创建一个机器人：
+  长:
+  宽：
+  高：
+-->
+
+
+<!-- robot 是一个根标签 -->
+<robot name="beacon">
+  <!-- link 是一个连杆 对应机器人的刚性部分 -->
+  <link name="base_link">
+    <!-- 对应于机器人的可视化部分 -->
+    <visual>
+      <!-- 几何外观 -->
+      <geometry><!---->
+        <!-- 对应于长方体 -->
+        <box size="3.0 0.5 0.1">
+        </box>
+      </geometry>
+    </visual>
+  </link>
+
+</robot>
