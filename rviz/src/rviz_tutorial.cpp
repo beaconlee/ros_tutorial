@@ -104,7 +104,7 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "rviz/quintic_polynomial.h"
-
+#include "rviz/osqp/piecewise_jerk_problem.h"
 
 
 class PathPublisher : public rclcpp::Node
@@ -120,7 +120,7 @@ public:
                                                                 10);
 
     timer_ =
-        this->create_wall_timer(std::chrono::milliseconds(500),
+        this->create_wall_timer(std::chrono::milliseconds(1000),
                                 std::bind(&PathPublisher::publish_path, this));
 
     timer_polygon_ = this->create_wall_timer(
@@ -141,6 +141,7 @@ private:
     path.header.frame_id = "map";
 
     static int j = 1;
+
     ++j;
 
     if(j > 4)
@@ -148,14 +149,25 @@ private:
       j = 1;
     }
 
-    for(int i = 0; i < 10; ++i)
+    Eigen::VectorXd path2;
+
+    int size = path2.size() / 3;
+    pjp_.Optimize(&path2);
+
+    std::cout << "osqp result:" << path2 << "\n";
+
+    static int k = -1;
+    k *= -1;
+
+
+    for(int i = 0; i < size; ++i)
     {
       geometry_msgs::msg::PoseStamped pose;
       pose.header.stamp = this->now();
       pose.header.frame_id = "map";
-      double t = i * 0.01 * j;
-      pose.pose.position.x = qpx_.f(t);
-      pose.pose.position.y = qpy_.f(t);
+      double t = i * 0.01;
+      pose.pose.position.x = t * k;
+      pose.pose.position.y = path2[i];
       pose.pose.position.z = 0.0;
       pose.pose.orientation.w = 1.0;
 
@@ -216,6 +228,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_polygon_;
   beacon::QuinticPolynomial qpx_;
   beacon::QuinticPolynomial qpy_;
+
+  PiecewiseJerkProblem pjp_;
 };
 
 int main(int argc, char* argv[])
