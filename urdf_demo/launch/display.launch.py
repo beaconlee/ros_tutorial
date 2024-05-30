@@ -49,7 +49,7 @@ def generate_launch_description():
     description='Path to the URDF file'
   )
 
-  # 调用格式  ros2 launch urdf_demo  display.launch.py robot_model:="ros2 pkg prefix --share urdf_demo"/urdf/urdf/beacon2.urdf
+  # 调用格式  ros2 launch urdf_demo  display.launch.py robot_model:=`ros2 pkg prefix --share urdf_demo`/urdf/urdf/beacon2.urdf
 
   dir_value = LaunchConfiguration('robot_model')
   print(str(dir_value))
