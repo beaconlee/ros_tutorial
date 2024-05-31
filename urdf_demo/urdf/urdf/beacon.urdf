@@ -10,15 +10,34 @@
 <!-- robot 是一个根标签 -->
 <robot name="beacon">
   <!-- link 是一个连杆 对应机器人的刚性部分 -->
+
+  <material name="yellow">
+    <color rgba="0.8 0.6 0.2 1.0"></color>
+  </material>
+
   <link name="base_link">
     <!-- 对应于机器人的可视化部分 -->
     <visual>
       <!-- 几何外观 -->
       <geometry>
         <!-- 对应于长方体 -->
-        <box size="1.0 0.5 0.1">
-        </box>
+        <!-- <box size="2.0 0.5 0.1">
+        </box> -->
+        <!-- <sphere radius="0.5"></sphere> -->
+        <!-- 皮肤文件是以毫米为单位的, urdf 是以mi为单位 -->
+        <mesh filename="package://urdf_demo/meshes/bases/burger_base.stl" scale="0.001 0.001 0.001"></mesh>
       </geometry>
+
+      <!-- 这样设置 origin 是错误的 -->
+      <!-- <origon xyz="1 2 0" rpy="0.0 0.0 0.0"></origon> -->
+      <!-- 是 origin, rpy 代表:翻滚,俯仰,航向角 -->
+      <origin xyz="1 2 0" rpy="0.0 0.0 0.5" />
+
+      <!-- <material name="yellow">
+        <color rgba="0.8 0.6 0.2 1.0"></color>
+      </material> -->
+
+      <material name="yellow" />
     </visual>
   </link>
 
